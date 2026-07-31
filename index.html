@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>미니 플래시카드</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --text: #1f2430;
+    --muted: #8a8f9c;
+    --border: #e4e6ea;
+    --accent: #5b6cff;
+    --accent-2: #7c3aed;
+    --danger: #ef4444;
+    --shadow: 0 6px 18px rgba(30, 34, 48, 0.08);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 40px 20px 80px;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  header h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .add-form {
+    display: flex;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+  }
+
+  .add-form input {
+    flex: 1 1 200px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    background: #fbfbfd;
+  }
+
+  .add-form input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(91, 108, 255, 0.15);
+    background: #fff;
+  }
+
+  .add-form button {
+    flex: 0 0 auto;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+
+  .add-form button:hover {
+    opacity: 0.92;
+  }
+
+  .add-form button:active {
+    transform: scale(0.97);
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+  }
+
+  .card {
+    position: relative;
+    height: 160px;
+    perspective: 1200px;
+  }
+
+  .card-delete {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .card-delete:hover {
+    background: var(--danger);
+    color: #fff;
+  }
+
+  @property --flip {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+  }
+
+  .card-inner {
+    --flip: 0;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    /* 개별 transform 속성(rotate) + calc()로 --flip(0→1)을 각도로 매핑 */
+    rotate: y calc(var(--flip) * 180deg);
+    /* sin(flip * pi): 뒤집는 중간(0.5)에서 최대가 되는 살짝 부풀어오르는 팝 효과 */
+    scale: calc(1 + sin(var(--flip) * pi) * 0.06);
+    cursor: pointer;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    /* linear() 커스텀 이징으로 살짝 튕기는 스프링 느낌의 플립 */
+    transition: --flip 0.6s linear(0, 0.44 31%, 0.85 55%, 0.96 68%, 1.01 78%, 1 84%, 1),
+                box-shadow 0.6s ease;
+  }
+
+  .card.flipped .card-inner {
+    --flip: 1;
+    box-shadow: 0 14px 28px rgba(30, 34, 48, 0.16);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-inner {
+      transition: --flip 0.01s linear;
+      scale: 1;
+    }
+  }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    border-radius: 16px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.5;
+    word-break: break-word;
+    overflow: auto;
+  }
+
+  .card-front {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .card-back {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    rotate: y 180deg;
+  }
+
+  .card-tag {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11px;
+    opacity: 0.6;
+    letter-spacing: 0.03em;
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--muted);
+    padding: 60px 20px;
+    border: 1px dashed var(--border);
+    border-radius: 16px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>미니 플래시카드</h1>
+      <p>카드를 추가하고 클릭해서 뒤집어 보세요</p>
+    </header>
+
+    <form class="add-form" id="add-form">
+      <input type="text" id="front-input" placeholder="앞면 (질문)" autocomplete="off" required>
+      <input type="text" id="back-input" placeholder="뒷면 (정답)" autocomplete="off" required>
+      <button type="submit">추가</button>
+    </form>
+
+    <div class="card-grid" id="card-grid"></div>
+  </div>
+
+<script>
+  const STORAGE_KEY = 'flashcards';
+
+  const form = document.getElementById('add-form');
+  const frontInput = document.getElementById('front-input');
+  const backInput = document.getElementById('back-input');
+  const grid = document.getElementById('card-grid');
+
+  let cards = loadCards();
+
+  function loadCards() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveCards() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+  }
+
+  function render() {
+    grid.innerHTML = '';
+
+    if (cards.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = '아직 카드가 없어요. 위에서 카드를 추가해 보세요.';
+      grid.appendChild(empty);
+      return;
+    }
+
+    cards.forEach(card => {
+      const cardEl = document.createElement('div');
+      cardEl.className = 'card';
+      cardEl.dataset.id = card.id;
+
+      cardEl.innerHTML = `
+        <button class="card-delete" title="삭제">&times;</button>
+        <div class="card-inner">
+          <div class="card-face card-front">${escapeHtml(card.front)}</div>
+          <div class="card-face card-back">${escapeHtml(card.back)}</div>
+        </div>
+      `;
+
+      cardEl.querySelector('.card-inner').addEventListener('click', () => {
+        cardEl.classList.toggle('flipped');
+      });
+
+      cardEl.querySelector('.card-delete').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteCard(card.id);
+      });
+
+      grid.appendChild(cardEl);
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function addCard(front, back) {
+    cards.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      front,
+      back
+    });
+    saveCards();
+    render();
+  }
+
+  function deleteCard(id) {
+    cards = cards.filter(c => c.id !== id);
+    saveCards();
+    render();
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const front = frontInput.value.trim();
+    const back = backInput.value.trim();
+    if (!front || !back) return;
+    addCard(front, back);
+    frontInput.value = '';
+    backInput.value = '';
+    frontInput.focus();
+  });
+
+  render();
+</script>
+</body>
+</html>
